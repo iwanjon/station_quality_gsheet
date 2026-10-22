@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "tes307",
+  "private_key_id": "8992253d2c19c183c022fe83c6",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQD6DniQKX7ubBjt\nhMLima8vJsYO+4dv1DHcdp3gPC2PlYldqFD1qorKgbSy5wQcdM9e8uFOn2BbycH1\nU9gCgpFHyh7s7tlVirnCaG1JqVXtENi+qa7MIPohnbJ4hbKZmDTdNXLNkUSFDJHg\nQJNvkmjqo5jJtgrtW6MHosZfvhssO/pc4l5TNPneYpu52eWcSzcGNxP6srl5x3Vd\npsr4Y2BUgGQBxSShNKtCOqyjxm/4iroydARQoPp8l/DcQcXVFD8TSBuTHJVyXusa\nckOu7x7QX/8qRDqkypTezsRslC5mFgur/uL1zm050rkCJSV7JCxGvJcO2A9UkVl6\nkFKWXKd5AgMBAAECggEACRlZND+6TXE0CAKOd+HQ==\n-----END PRIVATE KEY-----\n",
+  "client_email": "id-tem",
+  "client_id": "113396026419",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/id-tesnt.com",
+  "universe_domain": "googleapis.com"
+}
