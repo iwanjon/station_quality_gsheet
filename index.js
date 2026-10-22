@@ -335,7 +335,7 @@ async function buatSheetHarian() {
           addSheet: {
             properties: {
               title: sheetName,
-              index: 1
+              index: 2
             }
           }
         }]
