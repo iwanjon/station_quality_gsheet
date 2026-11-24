@@ -43,6 +43,7 @@ const PIC_MAPPING = {
   "Aprilyanto": ["Sumatera Selatan", "Maluku", "Bangka Belitung", "Papua Selatan", "Maluku Utara", "Papua Barat", "Papua"]
 };
 
+
 function formatDate(date, format) {
   const year = date.getUTCFullYear();
   const month = String(date.getUTCMonth() + 1).padStart(2, '0');
@@ -51,6 +52,52 @@ function formatDate(date, format) {
   if (format === "dd-MM-yyyy") return `${day}-${month}-${year}`;
   return `${year}-${month}-${day}`;
 }
+
+
+
+function getBaseDateFromArgs() {
+  const args = process.argv.slice(2);
+  let dateArg = null;
+
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--date' && args[i + 1]) {
+      dateArg = args[i + 1];
+      break;
+    } else if (args[i].startsWith('--date=')) {
+      dateArg = args[i].split('=')[1];
+      break;
+    }
+  }
+
+  if (!dateArg) {
+    return { baseDate: new Date(), isCustomDate: false };
+  }
+
+  const match = /^(\d{2})-(\d{2})-(\d{4})$/.exec(dateArg.trim());
+  if (!match) {
+    log.error('ARGS', `Format --date tidak valid: "${dateArg}". Gunakan format dd-MM-yyyy (contoh: --date 22-11-2026).`);
+    process.exit(1);
+  }
+
+  const day = Number(match[1]);
+  const month = Number(match[2]);
+  const year = Number(match[3]);
+  const parsed = new Date(Date.UTC(year, month - 1, day));
+
+  // Verify calendar validity (e.g. rejects 31-02-2026)
+  if (
+    parsed.getUTCFullYear() !== year ||
+    parsed.getUTCMonth() !== month - 1 ||
+    parsed.getUTCDate() !== day
+  ) {
+    log.error('ARGS', `Tanggal tidak valid: "${dateArg}".`);
+    process.exit(1);
+  }
+
+  return { baseDate: parsed, isCustomDate: true };
+}
+
+
 
 async function buatSheetHarian() {
   console.time("Total Execution Time");
@@ -75,16 +122,54 @@ async function buatSheetHarian() {
   }
 
   try {
+    // // ==========================================
+    // // 2. DATE SETUP
+    // // ==========================================
+    // log.info('DATE', 'Menghitung rentang tanggal target (H-8 sampai H-2)...');
+    // const now = new Date();
+    // const yesterday = new Date(now);
+    // yesterday.setUTCDate(now.getUTCDate() - 1);
+    // const sheetName = formatDate(yesterday, "dd-MM-yyyy");
+
+    // log.info('DATE', `Target sheet name (H-1): "${sheetName}"`);
+
+    // // Verify existing sheets
+    // log.info('SHEET_CHECK', `Mengambil metadata spreadsheet ID: ${SPREADSHEET_ID}...`);
+    // const spreadsheetMeta = await sheets.spreadsheets.get({ spreadsheetId: SPREADSHEET_ID });
+    // const existingSheets = spreadsheetMeta.data.sheets.map(s => s.properties.title);
+    // log.info('SHEET_CHECK', `Daftar tab sheet saat ini (${existingSheets.length}): [${existingSheets.join(', ')}]`);
+
+    // if (existingSheets.includes(sheetName)) {
+    //   log.warn('SHEET_CHECK', `[ABORT] Sheet "${sheetName}" sudah ada di spreadsheet. Proses dibatalkan untuk menghindari duplikasi data.`);
+    //   console.timeEnd("Total Execution Time");
+    //   return;
+    // }
+    // log.info('SHEET_CHECK', `Sheet "${sheetName}" belum ada. Melanjutkan proses.`);
+
+    // const datesToFetch = [];
+    // for (let i = 8; i >= 2; i--) {
+    //   let d = new Date(now);
+    //   d.setUTCDate(now.getUTCDate() - i);
+    //   const label = formatDate(d, "dd-MM-yyyy");
+    //   const apiDate = formatDate(d, "yyyy-MM-dd");
+    //   datesToFetch.push({ label, apiDate, offsetDays: i });
+    //   log.debug('DATE_SETUP', `Slot tanggal: H-${i} -> Label: ${label} | Format API: ${apiDate}`);
+    // }
+
+    // const targetAvailabilityDate = datesToFetch[datesToFetch.length - 1].apiDate;
+    // log.info('DATE', `Rentang tanggal final: ${datesToFetch[0].label} (tertua) s/d ${datesToFetch[datesToFetch.length - 1].label} (terbaru)`);
+    // log.info('DATE', `Target tanggal korelasi Availability (H-2): ${targetAvailabilityDate}`);
+
+
     // ==========================================
     // 2. DATE SETUP
     // ==========================================
-    log.info('DATE', 'Menghitung rentang tanggal target (H-8 sampai H-2)...');
-    const now = new Date();
-    const yesterday = new Date(now);
-    yesterday.setUTCDate(now.getUTCDate() - 1);
-    const sheetName = formatDate(yesterday, "dd-MM-yyyy");
+    const { baseDate, isCustomDate } = getBaseDateFromArgs();
+    const sheetName = formatDate(baseDate, "dd-MM-yyyy");
 
-    log.info('DATE', `Target sheet name (H-1): "${sheetName}"`);
+    log.info('DATE', `Mode tanggal: ${isCustomDate ? 'Custom (--date)' : 'Default (Hari ini)'} -> Base date: "${sheetName}"`);
+    log.info('DATE', 'Menghitung rentang tanggal target (H-7 sampai H-1)...');
+    log.info('DATE', `Target sheet name (H-0): "${sheetName}"`);
 
     // Verify existing sheets
     log.info('SHEET_CHECK', `Mengambil metadata spreadsheet ID: ${SPREADSHEET_ID}...`);
@@ -100,9 +185,9 @@ async function buatSheetHarian() {
     log.info('SHEET_CHECK', `Sheet "${sheetName}" belum ada. Melanjutkan proses.`);
 
     const datesToFetch = [];
-    for (let i = 8; i >= 2; i--) {
-      let d = new Date(now);
-      d.setUTCDate(now.getUTCDate() - i);
+    for (let i = 7; i >= 1; i--) {
+      let d = new Date(baseDate);
+      d.setUTCDate(baseDate.getUTCDate() - i);
       const label = formatDate(d, "dd-MM-yyyy");
       const apiDate = formatDate(d, "yyyy-MM-dd");
       datesToFetch.push({ label, apiDate, offsetDays: i });
@@ -111,7 +196,9 @@ async function buatSheetHarian() {
 
     const targetAvailabilityDate = datesToFetch[datesToFetch.length - 1].apiDate;
     log.info('DATE', `Rentang tanggal final: ${datesToFetch[0].label} (tertua) s/d ${datesToFetch[datesToFetch.length - 1].label} (terbaru)`);
-    log.info('DATE', `Target tanggal korelasi Availability (H-2): ${targetAvailabilityDate}`);
+    log.info('DATE', `Target tanggal korelasi Availability (H-1): ${targetAvailabilityDate}`);
+
+    
 
     // ==========================================
     // 3. API FETCHING
@@ -368,3 +455,14 @@ async function buatSheetHarian() {
 }
 
 buatSheetHarian();
+
+
+
+
+
+
+
+//        Command	                      Sheet Name	   Averaged QC Range (7 Days)	  Availability Date
+// node index.js (run on 23-11-2026)	    23-11-2026	   16-11-2026 to 22-11-2026	      2026-11-22
+// node index.js --date 22-11-2026	      22-11-2026	   15-11-2026 to 21-11-2026	      2026-11-21
+// node index.js --date=22-11-2026	      22-11-2026	   15-11-2026 to 21-11-2026	      2026-11-21
